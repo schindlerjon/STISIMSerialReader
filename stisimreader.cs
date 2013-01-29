@@ -8,20 +8,27 @@ using System.Threading;
 
 namespace STISIMSerialReader_v0._1
 {
-    class Program
+    class stisimreader
     {
+		// Initialize Serial Port
         private static SerialPort port = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
+		// We would like to run out program on COM1
+		// the baud rate for this should be set to 9600 within STISIM
+		// The Parity should be set to 0 within STISIM
+		// The StopBits within STISIM should be set to 1
+		
+		// The following floats should be our recieved values or speed
         private static float currentSpeed = 0;
         private static float postedSpeed = 0;
 
         static void Main(string[] args)
         {
-           // Thread th_serial = new Thread(getSerialData);
-
-            // continue to gather data
+            // We want to contunuously gather data
             Thread t = new Thread(getSerialData);
+			
            // Thread y = new Thread(audioSplash);
             t.Start();
+			
            // y.Start();
 
             while (t.IsAlive)
@@ -73,25 +80,33 @@ namespace STISIMSerialReader_v0._1
 
             while (port.IsOpen == true)
             {
-                int q1 = port.ReadByte();
-                int q2 = port.ReadByte();
-                int q3 = port.ReadByte();
-                int q4 = port.ReadByte();
-                int vars = port.ReadByte();
+                int q1 = port.ReadByte();   // 255
+                int q2 = port.ReadByte();   // 255
+                int q3 = port.ReadByte();   // 255
+                int q4 = port.ReadByte();   // 255
+                int vars = port.ReadByte(); // Number fo variables to read
+				
                 Console.WriteLine("{0} {1} {2} {3} {4}", q1, q2, q3, q4, vars);
 
-                byte[] speed = new byte[4];
-                //for (int i = 0; i < vars; i++)
-                // {
+                byte[] speed = new byte[4]; // Initialize byte object to convert later
+				
+				// Get the current speed
                 port.Read(speed, 0, 4);
-
                 currentSpeed = BitConverter.ToSingle(speed, 0);
                 Console.WriteLine("     Current Speed: {0}", currentSpeed);
+				
+				// Get the posted speed
                 port.Read(speed, 0, 4);
                 postedSpeed = BitConverter.ToSingle(speed, 0);
                 Console.WriteLine("     Posted Speed: {0}", postedSpeed);
+				
+				// NOTE: The order in which the "speeds" are sent from STISIM are important
+				//       for current spee then posted speed, the first line in the STISIM file
+				//       should look about as follows "0 SOUT 36 45"
             }
         }
+		
+		// Implemented for debugging purposes
         static void WriteX()
         {
             for (int i = 0; i < 100; i++)
@@ -100,6 +115,8 @@ namespace STISIMSerialReader_v0._1
                 Thread.Sleep(10);
             }
         }
+		
+		// Implemented for debugging purposes and future projects dealing with ambient auditory displays
         static void audioSplash()
         {
             if(currentSpeed >= postedSpeed)
